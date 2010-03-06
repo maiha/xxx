@@ -16,7 +16,7 @@ module Spec
         #     subject { User.new }
         #     provide :name
         #
-        #       [intead of]
+        # [intead of]
         #
         #     it "should provide #name" do
         #       methods = subject.public_methods + subject.protected_methods + subject.private_methods
@@ -24,9 +24,18 @@ module Spec
         #     end
         #   end
         #
-        def provide(name)
+        def provide(name, &block)
           it "should provide ##{name}" do
             subject.should provide(name)
+          end
+
+          if block
+            describe("##{name}") do
+              define_method(name) do |*args|
+                subject.send(name, *args)
+              end
+              class_eval(&block)
+            end
           end
         end
       end
