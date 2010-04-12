@@ -65,8 +65,13 @@ module Spec
         end
 
         def provide_class_method(name, &block)
+          klass = described_class.is_a?(Class) ? described_class : nil
           it "should provide .#{name}" do
-            subject.should provide(name)
+            if klass
+              klass.should provide(name)
+            else
+              subject.should provide(name)
+            end
           end
 
           if block
@@ -80,14 +85,21 @@ module Spec
         end
 
         def provide_instance_method(name, &block)
+          klass = described_class.is_a?(Class) ? described_class : nil
           it "should provide ##{name}" do
-            subject.should provide(name)
+            if klass
+              (!!(klass.instance_method(name) rescue false)).should == true
+            else
+              subject.should provide(name)
+            end
           end
 
           if block
             describe("##{name}") do
-              define_method(name) do |*args|
-                subject.__send__(name, *args)
+              unless instance_methods.include?(name.to_s)
+                define_method(name) do |*args|
+                  subject.__send__(name, *args)
+                end
               end
               class_eval(&block)
             end
