@@ -11,6 +11,16 @@ module Spec
   module Example
     module Subject
       module ExampleGroupMethods
+        # == Usage
+        #   describe Foo do
+        #     # Foo should have instance method named 'foo'
+        #     provide_instance_method :foo
+        #     provide :foo    # same as 'foo', '#foo'
+        #
+        #     # Foo should have class method named 'foo'
+        #     provide_class_method :foo
+        #     provide '.foo'
+        #
         # == Examples
         #
         #   class Convert
@@ -46,6 +56,30 @@ module Spec
         #         subject.__send__(:execute, nil).should == nil    # 2)
         #
         def provide(name, &block)
+          case name.to_s
+          when /^\./            # class method
+            provide_class_method($', &block)
+          else
+            provide_instance_method(name.to_s.sub(/^#/,''), &block)
+          end
+        end
+
+        def provide_class_method(name, &block)
+          it "should provide .#{name}" do
+            subject.should provide(name)
+          end
+
+          if block
+            describe(".#{name}") do
+              define_method(name) do |*args|
+                subject.__send__(name, *args)
+              end
+              class_eval(&block)
+            end
+          end
+        end
+
+        def provide_instance_method(name, &block)
           it "should provide ##{name}" do
             subject.should provide(name)
           end
